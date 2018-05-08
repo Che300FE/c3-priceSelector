@@ -14,16 +14,11 @@
 
     <div class="price__content">
       <ul class="default-price__list">
-        <li class="default-price__item">
-          <span class="default-price__value">不限</span>
-          <span class="default-price__select-icon">
-            <img src="../assets/imgs/city_selected_single@3x.png">
-          </span>
-        </li>
-        <li class="default-price__item">
-          <span class="default-price__value">3万以下</span>
-          <span class="default-price__select-icon">
-            <img src="../assets/imgs/city_selected_single@3x.png">
+        <li class="default-price__item" v-for="(price, $index) in priceList" :key="$index" @click="choosePirce(price)">
+          <span class="default-price__value">{{ price.title }}</span>
+          <span class="default-price__select-icon"
+                v-show="selectedPrice.value === price.value && !selectedPrice.isDefine">
+            <img src="https://fezz.che300.com/pics/priceSelect/city_selected_single@3x.png">
           </span>
         </li>
       </ul>
@@ -31,18 +26,18 @@
       <div class="define-price">
         <div class="define-price__header">
           <span class="define-price__header-title">自定义价格</span>
-          <span class="define-price__header-confirm">确定</span>
+          <span class="define-price__header-confirm" @click="confirm">确定</span>
         </div>
         <div class="define-price__content">
           <div class="define-price__input-wrapper">
-            <input type="number" class="define-price__input">
+            <input type="number" class="define-price__input" v-model="definePirce.min" @input="definePriceChange">
             <span class="define-price__input—unit">万</span>
           </div>
           <span class="define-price__line"></span>
           <div class="define-price__input-wrapper">
-            <input type="number" class="define-price__input">
+            <input type="number" class="define-price__input" v-model="definePirce.max" @input="definePriceChange">
             <span class="define-price__input—unit">万</span>
-            <div class="error__tip">
+            <div class="error__tip" v-show="definePriceError">
               请从低到高输入
             </div>
           </div>
@@ -56,6 +51,45 @@
 <script>
 
   const PLUGIN_NAME = "price-selector";
+  // 默认可以选择的价格列表值
+  const DEFAULT_PRICES = [
+    {
+      value: "",
+      title: "不限"
+    },
+    {
+      value: "0-3",
+      title: "3万以下"
+    },
+    {
+      value: "3-5",
+      title: "3-5万"
+    },
+    {
+      value: "5-10",
+      title: "5-10万"
+    },
+    {
+      value: "10-15",
+      title: "10-15万"
+    },
+    {
+      value: "15-20",
+      title: "15-20万"
+    },
+    {
+      value: "20-25",
+      title: "20-25万"
+    },
+    {
+      value: "25-30",
+      title: "25-30万"
+    },
+    {
+      value: "30",
+      title: "30万以上"
+    }
+  ];
 
   export default {
     name: PLUGIN_NAME,
@@ -63,20 +97,95 @@
       // 组件是否显示的标识
       isVisiable: {
         type: Boolean,
-        default: true
+        default: false
+      },
+      // 非自定义价格列表
+      prices: {
+        type: Array,
+        default: () => []
+      },
+      initPirce: {
+        type: Object,
+        default: function () {
+          return {}
+        }
+      },
+      confirmCb: {
+        type: Function,
+        default: function () {
+        },
       }
     },
+    data() {
+      return {
+        priceList: [],
+        selectedPrice: {
+          title: '',
+          value: '',
+          isDefine: false
+        },
+        definePirce: {
+          min: '0',
+          max: '0',
+        },
+        definePriceError: false,
+      }
+    },
+    created() {
+      this.init();
+    },
     methods: {
+      // 初始化方法
+      init() {
+        this.priceList = this.prices.length ? this.prices : DEFAULT_PRICES;
+        this.selectedPrice = Object.assign(this.selectedPrice, this.initPirce);
 
-    }
+        var _priceInterval = [];
+
+        try {
+          _priceInterval = this.selectedPrice.value.split('-');
+        } catch (e) {
+          console.error('解析传入价格值时发生错误');
+          throw Error(e);
+        }
+
+        this.definePirce.min = _priceInterval[0] || 0;
+        this.definePirce.max = _priceInterval[1] || 0;
+      },
+      // 选择一个价格
+      choosePirce(priceItem) {
+        this.selectedPrice = Object.assign(this.selectedPrice, priceItem, {isDefine: false});
+      },
+      // 自定义价格值发生改变
+      definePriceChange() {
+        var _min = Number(this.definePirce.min);
+        var _max = Number(this.definePirce.max);
+
+        this.definePriceError = isNaN(_min) || isNaN(_max) || _min > _max;
+        // 输入的值是正确大小的自定义价格
+        if (!this.definePriceError) {
+          this.selectedPrice = {
+            title: `${_min}-${_max}万`,
+            value: `${_min}-${_max}`,
+            isDefine: true,
+          };
+        }
+      },
+      confirm() {
+        if (!this.definePriceError) {
+          this.confirmCb(this.selectedPrice);
+        }
+      }
+    },
+
   }
 </script>
 
 <style scoped lang="scss">
 
   $baseFontSize: 37.5; // 默认基准font-size
-  $white: #ffffff;     // 白色
-  $cheColor: #ff6600;  // 车三百橙色
+  $white: #ffffff; // 白色
+  $cheColor: #ff6600; // 车三百橙色
 
   // px2rem 方法
   @mixin px2rem($name, $px) {
@@ -92,13 +201,14 @@
     }
   }
 
-  .c3-price-selector{
+  .c3-price-selector {
     position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
     width: 100%;
     background-color: #f5f5f5;
+    z-index: 998;
 
     .title-bar {
       position: relative;
@@ -127,7 +237,7 @@
       }
     }
 
-    .price__content{
+    .price__content {
       position: absolute;
       top: 45px;
       left: 0;
@@ -135,10 +245,10 @@
       width: 100%;
       overflow-y: scroll;
 
-      .default-price__list{
+      .default-price__list {
         background-color: $white;
 
-        .default-price__item{
+        .default-price__item {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -149,7 +259,7 @@
           @include px2rem(font-size, 16);
           background-color: $white;
 
-          .default-price__select-icon{
+          .default-price__select-icon {
             @include px2rem(width, 20);
             @include px2rem(height, 20);
             @include px2rem(margin-right, 10);
@@ -163,29 +273,29 @@
         }
       }
 
-      .define-price{
+      .define-price {
         box-sizing: border-box;
         @include px2rem(padding, 15);
         @include px2rem(margin-top, 10);
         background-color: $white;
 
-        .define-price__header{
+        .define-price__header {
           display: flex;
           justify-content: space-between;
           @include px2rem(font-size, 16);
 
-          .define-price__header-confirm{
+          .define-price__header-confirm {
             color: $cheColor;
           }
         }
 
-        .define-price__content{
+        .define-price__content {
           display: flex;
           justify-content: center;
           align-items: center;
           @include px2rem(margin-top, 20);
 
-          .define-price__input-wrapper{
+          .define-price__input-wrapper {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -195,7 +305,7 @@
             border-radius: 4px;
             background-color: #f5f5f5;
 
-            .define-price__input{
+            .define-price__input {
               width: 80%;
               box-sizing: border-box;
               @include px2rem(height, 20);
@@ -207,12 +317,12 @@
               outline: none;
             }
 
-            .define-price__input—unit{
+            .define-price__input—unit {
               @include px2rem(margin-right, 10);
               @include px2rem(font-size, 16);
             }
 
-            .error__tip{
+            .error__tip {
               position: absolute;
               height: 22px;
               line-height: 22px;
@@ -221,23 +331,23 @@
               background-color: #333333;
               color: $white;
 
-              &:before{
+              &::before {
                 content: '';
                 position: absolute;
                 left: 10px;
                 bottom: 0;
-                transform: translate(0,90%);
+                transform: translate(0, 90%);
                 width: 0;
                 height: 0;
-                border-top:solid 8px #333333;
-                border-left:solid 8px transparent;
-                border-right:solid 8px transparent;
-                border-bottom:solid 8px transparent;
+                border-top: solid 8px #333333;
+                border-left: solid 8px transparent;
+                border-right: solid 8px transparent;
+                border-bottom: solid 8px transparent;
               }
             }
           }
 
-          .define-price__line{
+          .define-price__line {
             @include px2rem(width, 8);
             height: 1px;
             margin: 0 6px;
