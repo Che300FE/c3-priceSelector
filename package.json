@@ -1,7 +1,7 @@
 {
   "name": "c3-price-selector",
   "description": "车300价格选择器",
-  "version": "0.0.2",
+  "version": "0.0.8",
   "author": "carver <1084024036@qq.com>",
   "license": "MIT",
   "scripts": {

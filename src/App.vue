@@ -1,6 +1,9 @@
 <template>
   <div id="app">
-    <price-selector></price-selector>
+    <price-selector
+      :isVisiable="true"
+      :init-price="initPrice"
+    ></price-selector>
   </div>
 </template>
 
@@ -14,8 +17,26 @@
       priceSelector
     },
     data() {
-      return {}
-    }
+      return {
+        initPrice: {
+          title: '10-15万',
+          value: '10-15',
+          isDefine: true
+        }
+      }
+    },
+    mounted () {
+      setTimeout(() => {
+        this.initPrice =  Object.assign(
+          {},
+          {
+            title: '15-20万',
+            value: '15-20',
+            isDefine: false
+          }
+        );
+      }, 3000);
+    },
   }
 </script>
 

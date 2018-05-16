@@ -104,7 +104,7 @@
         type: Array,
         default: () => []
       },
-      initPirce: {
+      initPrice: {
         type: Object,
         default: function () {
           return {}
@@ -112,8 +112,11 @@
       },
       confirmCb: {
         type: Function,
-        default: function () {
-        },
+        default: function () {},
+      },
+      goBack: {
+        type: Function,
+        default: function () {}
       }
     },
     data() {
@@ -131,31 +134,82 @@
         definePriceError: false,
       }
     },
+    watch: {
+      initPrice: {
+        handler (newPrice) {
+          console.log('价格属性发生改变，重新渲染价格组件');
+          this.initPrice = newPrice;
+          this.init();
+        },
+        deep: true
+      }
+    },
     created() {
       this.init();
     },
     methods: {
       // 初始化方法
-      init() {
+	    init() {
+        // 可自定义扩展的价格列表
         this.priceList = this.prices.length ? this.prices : DEFAULT_PRICES;
-        this.selectedPrice = Object.assign(this.selectedPrice, this.initPirce);
+        // 初始化已经选择的价格
+        this.selectedPrice = Object.assign(this.selectedPrice, this.initPrice);
+        // 如果是自定义的数据
+        this.selectedPrice.isDefine && this.setDefinePriceInterval(this.selectedPrice);
+      },
 
-        var _priceInterval = [];
+      /**
+       * 比较区间最小值和最大值是否合法
+       * @param  {[Number,String]} minVal 区间最小值
+       * @param  {[Number,String]} maxVal 区间最大值
+       * @return {[Boolean]}       是否合法
+       */
+      testIntervalQualified (minVal, maxVal) {
+        minVal = typeof minVal === 'number' ? minVal : Number(minVal);
+        maxVal = typeof maxVal === 'number' ? maxVal : Number(maxVal);
 
-        try {
-          _priceInterval = this.selectedPrice.value.split('-');
-        } catch (e) {
-          console.error('解析传入价格值时发生错误');
-          throw Error(e);
+        if (isNaN(minVal)) {
+          throw new Error('自定义最小值非数字');
         }
 
-        this.definePirce.min = _priceInterval[0] || 0;
-        this.definePirce.max = _priceInterval[1] || 0;
+        if (isNaN(maxVal)) {
+          throw new Error('自定义最大值非数字');
+        }
+
+        if (minVal > maxVal) {
+          throw new Error('自定义最小值大于最大值');
+        }
+
+        return true;
       },
+
+      /**
+       * 设置自定义价格区间到数据上
+       * @param {[String]} definePrice 自定义的价格区间字符串
+       */
+      setDefinePriceInterval (definePrice) {
+        var priceInterval = definePrice.value.split('-');
+        var min = Number(priceInterval[0]) || 0;
+        var max = Number(priceInterval[1]) || 0;
+
+        try {
+          // 满足测试条件对传入的自定义区间赋值
+          if (this.testIntervalQualified(min, max)) {
+            this.definePirce = {
+              min, max
+            };
+          }
+        }
+        catch (e) {
+          console.error(e);
+        }
+      },
+
       // 选择一个价格
       choosePirce(priceItem) {
         this.selectedPrice = Object.assign(this.selectedPrice, priceItem, {isDefine: false});
       },
+
       // 自定义价格值发生改变
       definePriceChange() {
         var _min = Number(this.definePirce.min);
@@ -327,6 +381,7 @@
               height: 22px;
               line-height: 22px;
               top: -30px;
+              left: 0;
               padding: 0 5px;
               background-color: #333333;
               color: $white;

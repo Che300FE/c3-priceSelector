@@ -1,6 +1,6 @@
 # c3-price-selector
 
-> 车300价格选择器
+> 车300价格选择器  业务组件
 
 ## Build Setup
 
@@ -15,4 +15,25 @@ npm run dev
 npm run build
 ```
 
-For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).
+## 0.0.6
+
+增加了 initPirce 属性字段的监听
+
+当通过如下代码可以自动修改组件内部价格显示的值
+
+```js
+ initPirce = Object.assign(
+   {},
+   initPirce,
+   {
+     title: '1-100万',
+     value: '1-100',
+     isDefine: false
+   }
+ );
+```
+
+### 0.0.8
+
+1. 复了 initPrice 字段值修改修改失效的问题
+2. 修改了字段名称
