@@ -2,7 +2,7 @@
   <div id="app">
     <price-selector
       :isVisiable="true"
-      :init-price="initPrice"
+      :confirm-cb="confirmCb"
     ></price-selector>
   </div>
 </template>
@@ -37,6 +37,11 @@
         );
       }, 3000);
     },
+    methods: {
+      confirmCb(price){
+        console.log('选择的价格是', price);
+      }
+    }
   }
 </script>
 

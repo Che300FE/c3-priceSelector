@@ -14,7 +14,7 @@
 
     <div class="price__content">
       <ul class="default-price__list">
-        <li class="default-price__item" v-for="(price, $index) in priceList" :key="$index" @click="choosePirce(price)">
+        <li class="default-price__item" v-for="(price, $index) in priceList" :key="$index" @click="choosePrice(price)">
           <span class="default-price__value">{{ price.title }}</span>
           <span class="default-price__select-icon"
                 v-show="selectedPrice.value === price.value && !selectedPrice.isDefine">
@@ -30,12 +30,12 @@
         </div>
         <div class="define-price__content">
           <div class="define-price__input-wrapper">
-            <input type="number" class="define-price__input" v-model="definePirce.min" @input="definePriceChange">
+            <input :type="inputType" class="define-price__input" v-model="definePrice.min" @input="definePriceChange('min')" @focus="definePriceFocus" @blur="defineValBlur">
             <span class="define-price__input—unit">万</span>
           </div>
           <span class="define-price__line"></span>
           <div class="define-price__input-wrapper">
-            <input type="number" class="define-price__input" v-model="definePirce.max" @input="definePriceChange">
+            <input :type="inputType" class="define-price__input" v-model="definePrice.max" @input="definePriceChange('max')" @focus="definePriceFocus" @blur="defineValBlur">
             <span class="define-price__input—unit">万</span>
             <div class="error__tip" v-show="definePriceError">
               请从低到高输入
@@ -49,7 +49,6 @@
 </template>
 
 <script>
-
   const PLUGIN_NAME = "price-selector";
   // 默认可以选择的价格列表值
   const DEFAULT_PRICES = [
@@ -127,11 +126,13 @@
           value: '',
           isDefine: false
         },
-        definePirce: {
-          min: '0',
-          max: '0',
+        definePrice: {
+          min: '',
+          max: '',
         },
         definePriceError: false,
+        // 自定义价格输入框的类型
+        inputType: 'number'
       }
     },
     watch: {
@@ -195,7 +196,7 @@
         try {
           // 满足测试条件对传入的自定义区间赋值
           if (this.testIntervalQualified(min, max)) {
-            this.definePirce = {
+            this.definePrice = {
               min, max
             };
           }
@@ -206,28 +207,50 @@
       },
 
       // 选择一个价格
-      choosePirce(priceItem) {
+      choosePrice(priceItem) {
         this.selectedPrice = Object.assign(this.selectedPrice, priceItem, {isDefine: false});
+        this.confirmCb(this.selectedPrice);
+      },
+
+      /**
+       * 自定义价格的输入框获取焦点时触发
+       * 将输入框移动到手机可视区域内
+       */
+      definePriceFocus () {
+        var priceWrapperEl = document.querySelector('.define-price');
+        priceWrapperEl.scrollIntoView(true);
+        this.inputType = 'text'
+      },
+
+      // 当自定义价格输入框是去焦点的时候触发
+      defineValBlur() {
+        this.inputType = 'number'
       },
 
       // 自定义价格值发生改变
-      definePriceChange() {
-        var _min = Number(this.definePirce.min);
-        var _max = Number(this.definePirce.max);
+      definePriceChange(key) {
+        let newBoundVal = Number(this.definePrice[key])
 
-        this.definePriceError = isNaN(_min) || isNaN(_max) || _min > _max;
-        // 输入的值是正确大小的自定义价格
-        if (!this.definePriceError) {
-          this.selectedPrice = {
-            title: `${_min}-${_max}万`,
-            value: `${_min}-${_max}`,
-            isDefine: true,
-          };
+        if (this.definePrice[key] === '' || isNaN(newBoundVal)) {
+          this.definePrice[key] = ''
+          return
         }
+        // 判断区间大小是否正确
+        this.definePriceError = Number(this.definePrice.min) >= Number(this.definePrice.max)
       },
       confirm() {
-        if (!this.definePriceError) {
-          this.confirmCb(this.selectedPrice);
+        let definePrice = this.definePrice
+
+        if (
+          definePrice.min !== '' &&
+          definePrice.max !== '' &&
+          !this.definePriceError
+        ) {
+          this.confirmCb({
+            title: `${definePrice.min}-${definePrice.max}万`,
+            value: `${definePrice.min}-${definePrice.max}`,
+            isDefine: true,
+          })
         }
       }
     },
@@ -262,7 +285,7 @@
     bottom: 0;
     width: 100%;
     background-color: #f5f5f5;
-    z-index: 998;
+    z-index: 12;
 
     .title-bar {
       position: relative;

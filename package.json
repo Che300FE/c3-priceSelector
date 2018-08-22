@@ -1,7 +1,7 @@
 {
   "name": "c3-price-selector",
   "description": "车300价格选择器",
-  "version": "0.0.9",
+  "version": "0.0.13",
   "author": "carver <1084024036@qq.com>",
   "license": "MIT",
   "scripts": {
@@ -9,7 +9,7 @@
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
   },
   "dependencies": {
-    "c3-price-selector": "^0.0.1",
+    "better-scroll": "^1.11.1",
     "vue": "^2.5.11"
   },
   "browserslist": [
